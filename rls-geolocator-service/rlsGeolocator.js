@@ -12,7 +12,7 @@
         };
 
         var browserSupportsGeolocation = function () {
-            return $window.navigator.hasOwnProperty("geolocation");
+            return "geolocation" in $window.navigator;
         };
 
         var handleGetCurrentPositionError = function (error) {
@@ -20,7 +20,11 @@
         };
 
         var handleGetCurrentPositionResponse = function (data) {
-            currentPositionDefer.resolve(data);
+            currentPositionDefer.resolve({
+                accuracy: data.coords.accuracy,
+                latitude: data.coords.latitude,
+                longitude: data.coords.longitude
+            });
         };
 
         var handleWatchPositionResponse = function (response) {
@@ -31,13 +35,13 @@
             watchPositionDefer.reject(error);
         };
 
-        var currentPosition = function () {
+        var getCurrentPosition = function () {
 
             if (browserSupportsGeolocation()) {
                 $window.navigator.geolocation.getCurrentPosition(handleGetCurrentPositionResponse, handleGetCurrentPositionError, options);
             } else {
-                currentPositionDefer.reject("goalocation not supported");
-                $log.error("goalocation not supported");
+                currentPositionDefer.reject("geolocation not supported");
+                $log.error("geolocation not supported");
             }
 
             return currentPositionDefer.promise;
@@ -47,7 +51,7 @@
 
             if (browserSupportsGeolocation()) {
                 watchPositionId = $window.navigator.geolocation.watchPosition(handleWatchPositionResponse, handleWatchPositionError, options);
-                $log.info({watchPositionId: watchPositionId});
+                $log.info({ watchPositionId: watchPositionId });
             }
 
             return watchPositionDefer.promise;
@@ -58,13 +62,13 @@
         };
 
         return {
-            currentPosition: currentPosition,
+            getCurrentPosition: getCurrentPosition,
             watchPosition: watchPosition,
             clearWatch: clearWatch
         };
     };
 
     angular.module("rlsGeolocator", [])
-           .factory("rlsGeolocatorService", ["$window", "$q", "$log", geolocatorService]);
+        .factory("rlsGeolocatorService", ["$window", "$q", "$log", geolocatorService]);
 
 })();
